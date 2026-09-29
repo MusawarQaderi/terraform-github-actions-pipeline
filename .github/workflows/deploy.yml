@@ -1,0 +1,23 @@
+name: "Cloud GitOps Pipeline"
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+    terraform-check:
+      name: "Terraform Validieren"
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Code herunterladen
+          uses: actions/checkout@v4
+
+        - name: Terraform installieren
+          uses: hashicorp/setup-terraform@v3
+
+        - name: Terraform Init (Vorbereiten)
+          run: terraform init -backend=false
+
+        - name: Terraform Validate (Code auf Fehler prüfen)
+          run: terraform validate
