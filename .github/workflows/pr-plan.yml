@@ -1,0 +1,53 @@
+name: "Terraform PR Plan"
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+# Wichtig: Wir brauchen Lese- und Schreibrechte, damit die Pipeline einen Kommentar in den PR schreiben darf
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  terraform-plan:
+    name: "Terraform Plan (PR)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code herunterladen
+        uses: actions/checkout@v4
+
+      - name: Terraform installieren
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan ausführen
+        id: plan
+        run: |
+          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_ENV
+          terraform plan -no-color || exit 1
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Kommentar zum Pull Request hinzufügen
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### 🤖 Terraform Plan Ergebnis
+            Folgenschwere Änderungen wurden simuliert:
+            \`\`\`hcl
+            ${process.env.PLAN_OUTPUT}
+            \`\`\`
+            *Erstellt automatisch durch GitHub Actions.*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
