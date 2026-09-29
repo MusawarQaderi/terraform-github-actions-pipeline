@@ -20,7 +20,7 @@ resource "docker_image" "nginx" {
 
 resource "docker_container" "mein_webserver" {
   image = docker_image.nginx.image_id
-  name  = "terraform-test-server"
+  name  = "mein-cooler-container"
   ports {
     internal = 80
     external = 8080
